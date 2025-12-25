@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    if: github.ref == 'refs/heads/main'
+
+    strategy:
+      matrix:
+        node-version: [21.x]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - run: yarn install
+
+      - name: rsync deployments
+        uses: burnett01/rsync-deployments@5.1
+        with:
+          switches: -avzr --delete --exclude 'node_modules'
+          path: ./*
+          remote_path: /var/www/crs-backend/
+          remote_host: ${{ secrets.EC2_HOST }}
+          remote_user: ubuntu
+          remote_key: "${{ secrets.EC2_PRIVATE_KEY }}"
+       
